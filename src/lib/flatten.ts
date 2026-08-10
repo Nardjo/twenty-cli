@@ -157,12 +157,46 @@ export function extractList(plural: string, res: unknown): unknown[] {
   return [];
 }
 
-/** Extract a single record from get/create/update response. */
+/**
+ * Extract a single record from get/create/update response.
+ * Twenty shapes seen in the wild:
+ *   { data: { person: {...} } }
+ *   { data: { createNote: {...} } }          // REST create
+ *   { data: { updatePerson: {...} } }
+ *   { data: { createNote: {...} } } nested under an extra data when proxied
+ */
 export function extractOne(singular: string, res: unknown): unknown {
   if (!res || typeof res !== "object") return res;
-  const data = (res as Record<string, unknown>).data;
-  if (data && typeof data === "object" && singular in (data as object)) {
-    return (data as Record<string, unknown>)[singular];
+
+  let node: unknown = res;
+  // Unwrap nested `{ data: ... }` shells (max 3)
+  for (let i = 0; i < 3; i++) {
+    if (!node || typeof node !== "object" || Array.isArray(node)) break;
+    const obj = node as Record<string, unknown>;
+    if ("data" in obj && obj.data && typeof obj.data === "object") {
+      node = obj.data;
+      continue;
+    }
+    break;
   }
-  return data ?? res;
+
+  if (!node || typeof node !== "object" || Array.isArray(node)) return node ?? res;
+  const obj = node as Record<string, unknown>;
+
+  if (singular in obj) return obj[singular];
+
+  const pascal = singular.charAt(0).toUpperCase() + singular.slice(1);
+  for (const prefix of ["create", "update", "upsert", "delete"]) {
+    const key = `${prefix}${pascal}`;
+    if (key in obj) return obj[key];
+  }
+
+  // Single-key object → that value
+  const keys = Object.keys(obj).filter((k) => k !== "pageInfo" && k !== "totalCount");
+  if (keys.length === 1) return obj[keys[0]!];
+
+  // Already a record
+  if ("id" in obj) return obj;
+
+  return obj;
 }

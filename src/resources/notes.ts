@@ -1,8 +1,8 @@
-import { Command } from "commander";
 import { client } from "../lib/client.js";
 import { output } from "../lib/output.js";
-import { handleError, CliError } from "../lib/errors.js";
+import { handleError } from "../lib/errors.js";
 import { extractOne, flattenOne } from "../lib/flatten.js";
+import { globalFlags } from "../lib/config.js";
 import { makeResource } from "../lib/resource-factory.js";
 
 const base = makeResource({
@@ -61,7 +61,8 @@ base
         }
 
         const payload = { note, noteTarget: target };
-        if (opts.json || opts.format === "json") {
+        const asJson = Boolean(opts.json || globalFlags.json || opts.format === "json");
+        if (asJson) {
           output(payload, { json: true });
         } else {
           output(
