@@ -1,6 +1,6 @@
 ---
 name: twenty-cli
-description: "Manage Twenty CRM via CLI - people, companies, opportunities, notes, tasks, targets. Use when user mentions Twenty, crm.jrd33, contacts, coachés, or CRM updates from the terminal."
+description: "Manage Twenty CRM via CLI - people, companies, opportunities, notes, tasks, targets. Use when user mentions Twenty CRM, contacts, deals, or CRM updates from the terminal."
 category: productivity
 ---
 
